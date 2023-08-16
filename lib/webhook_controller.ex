@@ -1,6 +1,5 @@
 defmodule CajuWhats.WebhookController do
   import Plug.Conn
-  import SweetXml
   require Logger
 
   def receive_message(conn) do

@@ -28,7 +28,6 @@ defmodule CajuWhats.MixProject do
       {:jason, "~> 1.4"},
       {:dotenvy, "~> 0.8.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:sweet_xml, "~> 0.7.3"}
     ]
   end
 end
