@@ -1,4 +1,4 @@
-defmodule TwilioClient do
+defmodule CajuWhats.TwilioClient do
   use HTTPoison.Base
 
   @twilio_url "https://api.twilio.com/2010-04-01/Accounts/AC23bf52cbca125a4c92d7268e3f28d82f/Messages.json"
@@ -19,7 +19,6 @@ defmodule TwilioClient do
   end
 
   def send_message(to, from, body) do
-    url = @twilio_url
     payload = [
       {"To", to},
       {"From", from},
@@ -27,7 +26,7 @@ defmodule TwilioClient do
     ]
     payload_encoded = URI.encode_query(payload)
 
-    response = post(url, payload_encoded, headers())
+    response = post(@twilio_url, payload_encoded, headers())
   end
 
 end

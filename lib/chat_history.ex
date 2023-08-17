@@ -1,4 +1,4 @@
-defmodule ChatHistory do
+defmodule CajuWhats.ChatHistory do
   use GenServer
 
   @base_path "history"
@@ -19,6 +19,10 @@ defmodule ChatHistory do
 
   def get_messages(user_id) do
     GenServer.call(__MODULE__, {:get_messages, user_id})
+  end
+
+  def handle_call({:add_message, user_id, role, {:ok, content}}, _from, state) do
+    handle_call({:add_message, user_id, role, content}, _from, state)
   end
 
   def handle_call({:add_message, user_id, role, content}, _from, state) do
@@ -53,7 +57,14 @@ defmodule ChatHistory do
   end
 
   defp trim_messages(messages) do
-    length_fun = fn msg, acc -> String.length(msg["content"]) + String.length(msg["role"]) + 34 + acc end
+    length_fun = fn msg, acc ->
+      content = case msg["content"] do
+        {:ok, text} -> text
+        text -> text
+      end
+      String.length(content) + String.length(msg["role"]) + 34 + acc
+    end
+
     total_length = Enum.reduce(messages, 0, length_fun)
 
     if total_length > @max_length do

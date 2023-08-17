@@ -8,7 +8,7 @@ defmodule CajuWhats do
 
     children = [
       {Plug.Cowboy, scheme: :http, plug: CajuWhats.Router, options: [port: 4000]},
-      CajuWhats.Supervisor
+      CajuWhats.ChatHistory
     ]
 
     Logger.info("Starting supervisor...")

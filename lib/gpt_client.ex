@@ -1,10 +1,10 @@
-defmodule GPTClient do
+defmodule CajuWhats.GPTClient do
   use HTTPoison.Base
 
   @chatgpt_url "https://api.openai.com/v1/chat/completions"
 
   defp api_key do
-    Application.fetch_env!(:your_app, :openai_key)
+    Application.fetch_env!(:caju_whats, :openai_key)
   end
 
   defp headers do

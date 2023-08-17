@@ -1,4 +1,4 @@
-defmodule WhisperClient do
+defmodule CajuWhats.WhisperClient do
   use HTTPoison.Base
 
   @whisper_url "https://api.openai.com/v1/audio/transcriptions"
