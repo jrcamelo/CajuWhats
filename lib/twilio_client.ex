@@ -26,7 +26,21 @@ defmodule CajuWhats.TwilioClient do
     ]
     payload_encoded = URI.encode_query(payload)
 
-    response = post(@twilio_url, payload_encoded, headers())
+    post(@twilio_url, payload_encoded, headers())
   end
 
+  def download_from_url(url) do
+    requestHeaders = [
+      {"Authorization", auth_token()}
+    ]
+    response = HTTPoison.get(url, requestHeaders, follow_redirect: true)
+    case response do
+      {:ok, %HTTPoison.Response{status_code: code, body: body, headers: headers}} when code in 200..399 ->
+        {:ok, body, headers}
+      {:ok, %HTTPoison.Response{status_code: status_code}} ->
+        {:error, "Received unexpected status code #{status_code}"}
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 end

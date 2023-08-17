@@ -66,7 +66,7 @@ defmodule CajuWhats.WebhookController do
 
   defp process_audio_error(reason, params, conn) do
     Logger.error("Error processing audio: #{reason}")
-    CajuWhats.TwilioClient.send_message(params["From"], params["To"], "Erro!")
+    CajuWhats.TwilioClient.send_message(params["From"], params["To"], "Houve um erro ao receber ou processar seu áudio, tente novamente ou contate o desenvolvedor.")
     {:error, conn |> send_resp(500, "Internal Server Error")}
   end
 
@@ -77,18 +77,23 @@ defmodule CajuWhats.WebhookController do
 
   defp download_and_save_audio(url, message_sid) do
     Logger.info("Downloading audio from #{url}")
-    {:ok, response} = HTTPoison.get(url, [], follow_redirect: true)
 
-    file_size = response.headers |> List.keyfind("Content-Length", 0) |> elem(1) |> String.to_integer()
-    max_file_size = 10_000_000 # Example: 10MB
+    case CajuWhats.TwilioClient.download_from_url(url) do
+      {:ok, body, headers} ->
+        file_size = headers |> List.keyfind("Content-Length", 0) |> elem(1) |> String.to_integer()
+        max_file_size = 10_000_000 # Example: 10MB
 
-    if file_size < max_file_size do
-      file_path = "downloads/#{message_sid}"
-      Logger.info("Saving audio to #{file_path}")
-      File.write!(file_path, response.body)
-      {:ok, file_path}
-    else
-      {:error, "File size exceeds the limit"}
+        if file_size < max_file_size do
+          file_path = "downloads/#{message_sid}"
+          Logger.info("Saving audio to #{file_path}")
+          File.write!(file_path, body)
+          {:ok, file_path}
+        else
+          {:error, "File size exceeds the limit"}
+        end
+      {:error, reason} ->
+        Logger.error("Error downloading audio from #{url}: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 
