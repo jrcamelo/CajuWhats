@@ -7,7 +7,8 @@ defmodule CajuWhats do
     Logger.info("Starting application...")
 
     children = [
-      {Plug.Cowboy, scheme: :http, plug: CajuWhats.Router, options: [port: 4000]}
+      {Plug.Cowboy, scheme: :http, plug: CajuWhats.Router, options: [port: 4000]},
+      CajuWhats.Supervisor
     ]
 
     Logger.info("Starting supervisor...")

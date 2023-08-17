@@ -14,8 +14,17 @@ defmodule CajuWhats.WebhookController do
   end
 
   defp handle_text_message(params, conn) do
-    # Respond with "Recebido!" if no audio is attached
-    TwilioClient.send_message(params["From"], params["To"], "Recebido!")
+    user_message = params["Body"]
+    user_id = params["From"]
+
+    history_messages = ChatHistory.get_messages(user_id)
+
+    response = GPTClient.chat(user_message, history_messages)
+
+    ChatHistory.add_message(user_id, "user", user_message)
+    ChatHistory.add_message(user_id, "assistant", response)
+
+    TwilioClient.send_message(params["From"], params["To"], response)
     conn |> send_resp(200, "Success")
   end
 
@@ -42,6 +51,9 @@ defmodule CajuWhats.WebhookController do
   end
 
   defp process_audio_success(params, transcription, conn) do
+    user_id = params["From"]
+    ChatHistory.add_message(user_id, "assistant", transcription)
+
     Logger.info("Audio processed successfully")
     TwilioClient.send_message(params["From"], params["To"], transcription)
     {:ok, conn |> send_resp(200, "Success")}
