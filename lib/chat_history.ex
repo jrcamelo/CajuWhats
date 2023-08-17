@@ -2,7 +2,7 @@ defmodule CajuWhats.ChatHistory do
   use GenServer
 
   @base_path "history"
-  @max_length 10_000
+  @max_length 8_000
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
