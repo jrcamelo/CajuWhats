@@ -17,15 +17,20 @@ defmodule CajuWhats.WebhookController do
     user_message = params["Body"]
     user_id = params["From"]
 
-    history_messages = ChatHistory.get_messages(user_id)
+    history_messages = CajuWhats.ChatHistory.get_messages(user_id)
 
-    response = GPTClient.chat(user_message, history_messages)
+    case CajuWhats.GPTClient.chat(user_message, history_messages) do
+      {:ok, response} ->
+        CajuWhats.ChatHistory.add_message(user_id, "user", user_message)
+        CajuWhats.ChatHistory.add_message(user_id, "assistant", response)
+        CajuWhats.TwilioClient.send_message(params["From"], params["To"], response)
+        conn |> send_resp(200, "Success")
 
-    ChatHistory.add_message(user_id, "user", user_message)
-    ChatHistory.add_message(user_id, "assistant", response)
-
-    TwilioClient.send_message(params["From"], params["To"], response)
-    conn |> send_resp(200, "Success")
+      {:error, _reason} ->
+        error_message = "Houve um erro ao receber ou processar sua mensagem, tente novamente ou contate o desenvolvedor."
+        CajuWhats.TwilioClient.send_message(params["From"], params["To"], error_message)
+        conn |> send_resp(500, "Internal Server Error")
+    end
   end
 
   defp handle_audio_message(params, url, conn) do
@@ -36,7 +41,7 @@ defmodule CajuWhats.WebhookController do
     processing_result =
       with {:ok, audio_path} <- download_and_save_audio(url, message_sid),
            {:ok, converted_audio_path} <- convert_audio(audio_path),
-           {:ok, transcription} <- WhisperClient.transcribe(converted_audio_path) do
+           {:ok, transcription} <- CajuWhats.WhisperClient.transcribe(converted_audio_path) do
         process_audio_success(params, transcription, conn)
       else
         {:error, reason} -> process_audio_error(reason, params, conn)
@@ -52,16 +57,16 @@ defmodule CajuWhats.WebhookController do
 
   defp process_audio_success(params, transcription, conn) do
     user_id = params["From"]
-    ChatHistory.add_message(user_id, "assistant", transcription)
+    CajuWhats.ChatHistory.add_message(user_id, "assistant", transcription)
 
     Logger.info("Audio processed successfully")
-    TwilioClient.send_message(params["From"], params["To"], transcription)
+    CajuWhats.TwilioClient.send_message(params["From"], params["To"], transcription)
     {:ok, conn |> send_resp(200, "Success")}
   end
 
   defp process_audio_error(reason, params, conn) do
     Logger.error("Error processing audio: #{reason}")
-    TwilioClient.send_message(params["From"], params["To"], "Erro!")
+    CajuWhats.TwilioClient.send_message(params["From"], params["To"], "Erro!")
     {:error, conn |> send_resp(500, "Internal Server Error")}
   end
 
