@@ -23,6 +23,7 @@ defmodule CajuWhats.WebhookController do
       {:ok, response} ->
         CajuWhats.ChatHistory.add_message(user_id, "user", user_message)
         CajuWhats.ChatHistory.add_message(user_id, "assistant", response)
+        Logger.info("Text processed successfully: #{response}")
         CajuWhats.TwilioClient.send_message(params["From"], params["To"], response)
         conn |> send_resp(200, "Success")
 
@@ -59,7 +60,7 @@ defmodule CajuWhats.WebhookController do
     user_id = params["From"]
     CajuWhats.ChatHistory.add_message(user_id, "assistant", transcription)
 
-    Logger.info("Audio processed successfully")
+    Logger.info("Audio processed successfully: #{transcription}")
     CajuWhats.TwilioClient.send_message(params["From"], params["To"], transcription)
     {:ok, conn |> send_resp(200, "Success")}
   end
