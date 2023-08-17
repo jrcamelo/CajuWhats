@@ -1,5 +1,6 @@
 defmodule CajuWhats.GPTClient do
   use HTTPoison.Base
+  require Logger
 
   @chatgpt_url "https://api.openai.com/v1/chat/completions"
 
@@ -29,12 +30,16 @@ defmodule CajuWhats.GPTClient do
       "max_tokens" => 1200
     }
 
-    case HTTPoison.post(@chatgpt_url, Jason.encode!(payload), headers()) do
+    response = HTTPoison.post(@chatgpt_url, Jason.encode!(payload), headers(), recv_timeout: 20_000)
+    case response do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
+      Logger.info("Received response: #{inspect(response_body)}")
         {:ok, extract_content(Jason.decode!(response_body))}
       {:ok, %HTTPoison.Response{status_code: status_code}} ->
+        Logger.error("Error on GPT response: #{inspect(response)}")
         {:error, "Houve um erro: #{status_code}"}
       {:error, reason} ->
+        Logger.error("Error on GPT response: #{inspect(response)}")
         {:error, reason}
     end
   end
