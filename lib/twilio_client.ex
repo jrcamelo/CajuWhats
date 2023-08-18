@@ -26,7 +26,7 @@ defmodule CajuWhats.TwilioClient do
     payload_encoded = URI.encode_query(payload)
 
     case post(@twilio_url, payload_encoded, headers()) do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
+      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..399 ->
         Logger.info("Message sent successfully to #{to}")
         :ok
       {:ok, %HTTPoison.Response{status_code: 429}} when retry_count < max_retries ->
